@@ -11,6 +11,7 @@ Inspired by Spring Framework's `@Transactional` model.
 * [Propagation Modes](#propagation-modes)
 * [Isolation Level](#isolation-level)
 * [Spring-to-FastAPI Mapping](#spring-to-fastapi-mapping)
+* [Public API](#public-api)
 * [Contributing](#contributing)
 
 <!-- markdown-toc-cli-end -->
@@ -133,6 +134,59 @@ When `isolation_level` is not applied by this decorator:
 | `@Transactional(propagation = MANDATORY)` | `@transactional(Propagation.MANDATORY)` |
 | Request filter/interceptor binds tx resources | `@app.middleware("http")` + `sessionmaker_context(sessionmaker)` |
 | Current tx-bound resource lookup | `current_session()` |
+
+## Public API
+
+The primary integration surface is:
+- `sqlalchemy_transactional.asyncio`
+- `sqlalchemy_transactional.common`
+
+### `sqlalchemy_transactional.asyncio`
+
+- `sessionmaker_context(sessionmaker)`
+  - Async context manager that binds one `async_sessionmaker` to the current context boundary.
+  - Use it at your application boundary (for example FastAPI HTTP middleware).
+
+- `@transactional(...)`
+  - Decorator for async service methods.
+  - `@transactional` means `Propagation.REQUIRED` by default.
+  - Accepts optional propagation and isolation level, such as:
+    - `@transactional(Propagation.MANDATORY)`
+    - `@transactional(isolation_level="SERIALIZABLE")`
+
+- `current_session()`
+  - Returns the current transaction-bound `AsyncSession`.
+  - Use inside transactional flow (for example inside methods decorated with `@transactional`).
+
+### `sqlalchemy_transactional.common`
+
+- `Propagation`
+  - Transaction propagation enum used by `@transactional`.
+  - `Propagation.REQUIRED`: join current transaction or create one if missing.
+  - `Propagation.MANDATORY`: require an active transaction.
+  - `Propagation.REQUIRES_NEW`: always start a new transaction.
+  - `Propagation.NESTED`: use savepoint semantics when a transaction exists.
+
+- `SQLAlchemyTransactionalError`
+  - Base exception for package-specific runtime errors.
+
+- `SessionFactoryAlreadyBoundError`
+  - Raised when `sessionmaker_context(...)` is bound more than once in the same context.
+
+- `SessionFactoryNotBoundError`
+  - Raised when runtime cannot resolve a bound session factory.
+
+- `SessionAlreadyBoundError`
+  - Raised when a session is bound more than once in the same context.
+
+- `SessionNotBoundError`
+  - Raised when `current_session()` is called without an active bound session.
+
+- `TransactionRequiredError`
+  - Raised when propagation requires an active transaction but none exists.
+
+- `UnsupportedPropagationModeError`
+  - Raised when an unsupported propagation value is provided.
 
 ## Contributing
 

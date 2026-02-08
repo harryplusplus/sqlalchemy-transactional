@@ -1,3 +1,5 @@
+"""Public async transactional API."""
+
 from contextlib import asynccontextmanager
 from functools import wraps
 from typing import Any, AsyncGenerator, Callable, overload
@@ -23,6 +25,12 @@ from sqlalchemy_transactional.internal.runtime import (
 async def sessionmaker_context(
     sessionmaker: Sessionmaker,
 ) -> AsyncGenerator[Sessionmaker, None]:
+    """Bind one sessionmaker to the current async context boundary.
+
+    This context is typically set once at an application boundary
+    (for example FastAPI middleware) so downstream `@transactional`
+    functions can resolve sessions consistently.
+    """
     if sessionmaker_ctx_var.get() is not None:
         raise SessionFactoryAlreadyBoundError()
 
@@ -34,6 +42,7 @@ async def sessionmaker_context(
 
 
 def current_session() -> AsyncSession:
+    """Return the transaction-bound `AsyncSession` in the current context."""
     session = session_ctx_var.get()
     if session is None:
         raise SessionNotBoundError()
@@ -54,6 +63,14 @@ def transactional(
     *,
     isolation_level: IsolationLevel | None = None,
 ) -> Callable[..., Any]:
+    """Decorate an async function with declarative transaction boundaries.
+
+    Usage:
+    - `@transactional` for default `Propagation.REQUIRED`
+    - `@transactional(Propagation.MANDATORY)` for explicit propagation
+    - `@transactional(isolation_level="SERIALIZABLE")` for isolation control
+    """
+
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
