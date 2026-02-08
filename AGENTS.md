@@ -40,6 +40,12 @@
 - `scripts/build-dist.sh`는 인자 없이 실행하며, 항상 클린 빌드(`uv build --clear`)를 사용한다.
 - 테스트 축은 `RUN_MIN_SQLALCHEMY_TEST` 환경변수로 제어한다(로컬 기본값 `0`, CI는 `1` 고정).
 
+## 릴리즈 규약
+- 패치 릴리즈 버전업/커밋/태깅은 `scripts/release-commit.sh`로만 수행한다.
+- `scripts/release-commit.sh`는 인자 없이 실행한다.
+- `scripts/release-commit.sh`는 `pyproject.toml` 버전 갱신, 릴리즈 커밋, `vX.Y.Z` 태그 생성까지 수행한다.
+- 푸시(`git push`, `git push --tags`)는 자동으로 실행하지 않고 사람이 최종 확인 후 수동 실행한다.
+
 ## 커밋 규약
 - 커밋은 작고 명확하게 나눈다.
 - 커밋 메시지는 변경 의도를 드러내게 작성한다.
