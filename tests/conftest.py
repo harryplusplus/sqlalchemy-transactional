@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+Sessionmaker = async_sessionmaker[AsyncSession]
+
 table_ddl = text(
     "CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)"
 )
@@ -28,7 +30,7 @@ async def engine(tmp_path: Path) -> AsyncGenerator[AsyncEngine, None]:
 @pytest_asyncio.fixture
 async def sessionmaker(
     engine: AsyncEngine,
-) -> async_sessionmaker[AsyncSession]:
+) -> Sessionmaker:
     return async_sessionmaker(engine, expire_on_commit=False)
 
 

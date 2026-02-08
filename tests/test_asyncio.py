@@ -1,6 +1,6 @@
 import pytest
+from conftest import Sessionmaker
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy_transactional.asyncio import (
     current_session,
     sessionmaker_context,
@@ -12,8 +12,6 @@ from sqlalchemy_transactional.common import (
     SessionNotBoundError,
     TransactionRequiredError,
 )
-
-Sessionmaker = async_sessionmaker[AsyncSession]
 
 
 async def _count_items(sm: Sessionmaker) -> int:

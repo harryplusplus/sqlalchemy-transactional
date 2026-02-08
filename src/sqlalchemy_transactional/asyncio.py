@@ -15,7 +15,7 @@ from sqlalchemy_transactional.common import (
     UnsupportedPropagationModeError,
 )
 
-Sessionmaker = Callable[..., AsyncSession]
+Sessionmaker = Callable[[], AsyncSession]
 
 SessionmakerContext = ContextVar[Sessionmaker | None]
 
