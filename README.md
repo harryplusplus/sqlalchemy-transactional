@@ -3,6 +3,18 @@
 Spring-style transactional boundaries for SQLAlchemy async sessions.
 Inspired by Spring Framework's `@Transactional` model.
 
+**Table of Contents**
+<!-- markdown-toc-cli --prefix='* ' --indentation='  ' --minlevel=2 --maxlevel=2 -->
+
+* [Quick Start](#quick-start)
+* [Why Use This](#why-use-this)
+* [Propagation Modes](#propagation-modes)
+* [Isolation Level](#isolation-level)
+* [Spring-to-FastAPI Mapping](#spring-to-fastapi-mapping)
+* [Contributing](#contributing)
+
+<!-- markdown-toc-cli-end -->
+
 ## Quick Start
 
 This quick start uses a FastAPI integration example to show transaction boundaries in a real application flow, not as isolated snippets.
