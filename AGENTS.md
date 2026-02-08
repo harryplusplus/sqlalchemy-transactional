@@ -35,9 +35,10 @@
 
 ## 작업 체크리스트
 - 일반 변경 검증 순서: `scripts/check.sh` -> `scripts/test.sh`
-- 배포 직전 검증: `scripts/release-check.sh`
+- 배포 직전 빌드/검증: `scripts/build-dist.sh`
 - 검증 명령은 직접 복제하지 말고 위 스크립트만 사용한다.
-- 테스트 축은 `RUN_MIN_SQLALCHEMY_TEST` 환경변수로 제어한다.
+- `scripts/build-dist.sh`는 인자 없이 실행하며, 항상 클린 빌드(`uv build --clear`)를 사용한다.
+- 테스트 축은 `RUN_MIN_SQLALCHEMY_TEST` 환경변수로 제어한다(로컬 기본값 `0`, CI는 `1` 고정).
 
 ## 커밋 규약
 - 커밋은 작고 명확하게 나눈다.

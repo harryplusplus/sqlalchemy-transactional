@@ -6,7 +6,7 @@ cd "${ROOT_DIR}"
 
 MIN_SQLALCHEMY_VERSION="${MIN_SQLALCHEMY_VERSION:-2.0.0}"
 MIN_SQLALCHEMY_SPEC="sqlalchemy[asyncio]==${MIN_SQLALCHEMY_VERSION}"
-RUN_MIN_SQLALCHEMY_TEST="${RUN_MIN_SQLALCHEMY_TEST:-1}"
+RUN_MIN_SQLALCHEMY_TEST="${RUN_MIN_SQLALCHEMY_TEST:-0}"
 
 echo "[1/2] pytest with project dependencies"
 uv run --group dev pytest "$@"
