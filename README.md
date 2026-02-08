@@ -71,16 +71,6 @@ async def create_user(payload: CreateUserRequest) -> dict[str, str]:
     return {"status": "ok"}
 ```
 
-## Spring-to-FastAPI Mapping
-
-| Spring concept | FastAPI + sqlalchemy-transactional |
-| --- | --- |
-| `@Transactional` on service methods | `@transactional` on async service methods |
-| `@Transactional(propagation = REQUIRED)` | `@transactional` (default = `Propagation.REQUIRED`) |
-| `@Transactional(propagation = MANDATORY)` | `@transactional(Propagation.MANDATORY)` |
-| Request filter/interceptor binds tx resources | `@app.middleware("http")` + `sessionmaker_context(sessionmaker)` |
-| Current tx-bound resource lookup | `current_session()` |
-
 ## Why Use This
 
 - Keep transaction plumbing out of service code.
@@ -121,6 +111,16 @@ When `isolation_level` is applied:
 
 When `isolation_level` is not applied by this decorator:
 - The function joins an already active transaction (`REQUIRED` with an active transaction, `MANDATORY`, or `NESTED` with an active transaction).
+
+## Spring-to-FastAPI Mapping
+
+| Spring concept | FastAPI + sqlalchemy-transactional |
+| --- | --- |
+| `@Transactional` on service methods | `@transactional` on async service methods |
+| `@Transactional(propagation = REQUIRED)` | `@transactional` (default = `Propagation.REQUIRED`) |
+| `@Transactional(propagation = MANDATORY)` | `@transactional(Propagation.MANDATORY)` |
+| Request filter/interceptor binds tx resources | `@app.middleware("http")` + `sessionmaker_context(sessionmaker)` |
+| Current tx-bound resource lookup | `current_session()` |
 
 ## Contributing
 
