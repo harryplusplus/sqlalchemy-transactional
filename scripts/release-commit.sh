@@ -9,8 +9,15 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
-echo "[1/4] uv version --bump patch --frozen"
-uv version --bump patch --frozen
+RELEASE_VERSION="${RELEASE_VERSION:-}"
+if [[ -n "${RELEASE_VERSION}" ]]; then
+  echo "[1/4] uv version ${RELEASE_VERSION} --frozen"
+  uv version "${RELEASE_VERSION}" --frozen
+else
+  echo "[1/4] uv version --bump patch --frozen"
+  uv version --bump patch --frozen
+fi
+
 VERSION="$(uv version --short)"
 
 if git rev-parse --verify "v${VERSION}" >/dev/null 2>&1; then
@@ -29,3 +36,4 @@ echo "[4/4] done"
 echo "Created commit: chore: release v${VERSION}"
 echo "Created tag: v${VERSION}"
 echo "Push is intentionally not executed."
+echo "Tip: set RELEASE_VERSION to publish a specific version (example: RELEASE_VERSION=1.0.0)."
