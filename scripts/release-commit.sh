@@ -11,10 +11,10 @@ fi
 
 RELEASE_VERSION="${RELEASE_VERSION:-}"
 if [[ -n "${RELEASE_VERSION}" ]]; then
-  echo "[1/4] uv version ${RELEASE_VERSION} --frozen"
+  echo "[1/5] uv version ${RELEASE_VERSION} --frozen"
   uv version "${RELEASE_VERSION}" --frozen
 else
-  echo "[1/4] uv version --bump patch --frozen"
+  echo "[1/5] uv version --bump patch --frozen"
   uv version --bump patch --frozen
 fi
 
@@ -25,14 +25,17 @@ if git rev-parse --verify "v${VERSION}" >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[2/4] git commit pyproject.toml"
-git add pyproject.toml
+echo "[2/5] uv lock"
+uv lock
+
+echo "[3/5] git commit pyproject.toml uv.lock"
+git add pyproject.toml uv.lock
 git commit -m "chore: release v${VERSION}"
 
-echo "[3/4] git tag v${VERSION}"
+echo "[4/5] git tag v${VERSION}"
 git tag "v${VERSION}"
 
-echo "[4/4] done"
+echo "[5/5] done"
 echo "Created commit: chore: release v${VERSION}"
 echo "Created tag: v${VERSION}"
 echo "Push is intentionally not executed."
