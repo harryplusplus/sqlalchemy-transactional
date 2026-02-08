@@ -34,13 +34,10 @@
 - README에는 내부 테스트/검증 방식 설명을 넣지 않는다(필요 시 기여 문서에서만 다룬다).
 
 ## 작업 체크리스트
-- 코드 변경 후 아래 순서로 확인한다.
-1. `scripts/check.sh`
-2. `scripts/test.sh`
-- 테스트 실행 인자/축 제어는 명령을 직접 복제하지 말고 스크립트 인자/환경변수로 처리한다.
-- 예:
-  - 빠른 로컬 확인: `RUN_MIN_SQLALCHEMY_TEST=0 scripts/test.sh`
-  - 최소 버전 축 포함: `RUN_MIN_SQLALCHEMY_TEST=1 scripts/test.sh`
+- 일반 변경 검증 순서: `scripts/check.sh` -> `scripts/test.sh`
+- 배포 직전 검증: `scripts/release-check.sh`
+- 검증 명령은 직접 복제하지 말고 위 스크립트만 사용한다.
+- 테스트 축은 `RUN_MIN_SQLALCHEMY_TEST` 환경변수로 제어한다.
 
 ## 커밋 규약
 - 커밋은 작고 명확하게 나눈다.

@@ -3,10 +3,42 @@ name = "sqlalchemy-transactional"
 version = "0.1.0"
 description = "Spring-style transactional boundaries for SQLAlchemy async sessions."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "harryplusplus", email = "harryplusplus@gmail.com" },
+]
 requires-python = ">=3.10"
+keywords = [
+    "sqlalchemy",
+    "transaction",
+    "transactional",
+    "asyncio",
+    "fastapi",
+    "spring",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Framework :: AsyncIO",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries",
+]
 dependencies = [
     "sqlalchemy[asyncio]>=2.0.0,<3",
 ]
+
+[project.urls]
+Homepage = "https://github.com/harryplusplus/sqlalchemy-transactional"
+Repository = "https://github.com/harryplusplus/sqlalchemy-transactional"
+Issues = "https://github.com/harryplusplus/sqlalchemy-transactional/issues"
 
 [build-system]
 requires = ["uv_build>=0.10.0"]
@@ -23,6 +55,7 @@ dev = [
     "pytest-asyncio>=1.3.0",
     "pytest-cov>=7.0.0",
     "ruff>=0.15.0",
+    "twine>=6.2.0",
 ]
 
 [tool.pytest.ini_options]
