@@ -3,9 +3,10 @@
 Spring-style transactional boundaries for SQLAlchemy async sessions.
 Inspired by Spring Framework's `@Transactional` model.
 
-## Quick Start (FastAPI)
+## Quick Start
 
-Assume you already run FastAPI with `async_sessionmaker`, and want Spring-like declarative transaction boundaries in service methods.
+This quick start uses a FastAPI integration example to show transaction boundaries in a real application flow, not as isolated snippets.
+It assumes you already run FastAPI with an `async_sessionmaker` and want Spring-like declarative transaction boundaries in service methods.
 
 ```python
 from fastapi import FastAPI, Request
