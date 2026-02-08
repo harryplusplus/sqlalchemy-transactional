@@ -3,9 +3,13 @@
 Spring-style transactional boundaries for SQLAlchemy async sessions.
 Inspired by Spring Framework's `@Transactional` model.
 
-## Quick Start
+## Quick Start (FastAPI)
+
+Assume you already run FastAPI with `async_sessionmaker`, and want Spring-like declarative transaction boundaries in service methods.
 
 ```python
+from fastapi import FastAPI, Request
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -16,39 +20,71 @@ from sqlalchemy_transactional.asyncio import (
 )
 from sqlalchemy_transactional.common import Propagation
 
+app = FastAPI()
 engine = create_async_engine("sqlite+aiosqlite:///app.db")
 sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
 
 
-# 1) Bind async_sessionmaker once per request/job boundary
+# 1) Bind async_sessionmaker once per request boundary
 @app.middleware("http")
-async def transactional_context_middleware(request, call_next):
+async def transactional_context_middleware(request: Request, call_next):
     async with sessionmaker_context(sessionmaker):
         return await call_next(request)
 
 
-# 2) Write service logic without manual begin/commit/rollback
-@transactional  # default propagation = REQUIRED
-async def create_user(name: str) -> None:
-    await current_session().execute(
-        text("INSERT INTO users (name) VALUES (:name)"),
-        {"name": name},
-    )
+class CreateUserRequest(BaseModel):
+    name: str
 
 
-@transactional(Propagation.REQUIRES_NEW)
-async def write_audit_log(message: str) -> None:
-    await current_session().execute(
-        text("INSERT INTO audit_logs (message) VALUES (:message)"),
-        {"message": message},
-    )
+# 2) Put transaction boundaries on service methods
+class UserService:
+    @transactional  # default propagation = REQUIRED
+    async def create_user(self, name: str) -> None:
+        await self._validate_name(name)
+        await self._insert_user(name)
+
+    @transactional(Propagation.MANDATORY)
+    async def _validate_name(self, name: str) -> None:
+        result = await current_session().execute(
+            text("SELECT 1 FROM users WHERE name = :name"),
+            {"name": name},
+        )
+        if result.first() is not None:
+            raise ValueError("name already exists")
+
+    @transactional(Propagation.MANDATORY)
+    async def _insert_user(self, name: str) -> None:
+        await current_session().execute(
+            text("INSERT INTO users (name) VALUES (:name)"),
+            {"name": name},
+        )
+
+
+user_service = UserService()
+
+
+# 3) Route/controller stays thin
+@app.post("/users")
+async def create_user(payload: CreateUserRequest) -> dict[str, str]:
+    await user_service.create_user(payload.name)
+    return {"status": "ok"}
 ```
+
+## Spring-to-FastAPI Mapping
+
+| Spring concept | FastAPI + sqlalchemy-transactional |
+| --- | --- |
+| `@Transactional` on service methods | `@transactional` on async service methods |
+| `@Transactional(propagation = REQUIRED)` | `@transactional` (default = `Propagation.REQUIRED`) |
+| `@Transactional(propagation = MANDATORY)` | `@transactional(Propagation.MANDATORY)` |
+| Request filter/interceptor binds tx resources | `@app.middleware("http")` + `sessionmaker_context(sessionmaker)` |
+| Current tx-bound resource lookup | `current_session()` |
 
 ## Why Use This
 
 - Keep transaction plumbing out of service code.
 - Declare transaction scope at the function boundary.
-- Use familiar propagation semantics from Spring (`REQUIRED`, `REQUIRES_NEW`, etc.).
+- Use familiar propagation semantics from Spring (`REQUIRED`, `MANDATORY`, etc.).
 - Apply isolation level declaratively when needed.
 - Make service methods easier to read, test, and review.
 
