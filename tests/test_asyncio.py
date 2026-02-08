@@ -1,3 +1,5 @@
+from typing import cast
+
 import pytest
 from conftest import Sessionmaker
 from sqlalchemy import text
@@ -8,9 +10,11 @@ from sqlalchemy_transactional.asyncio import (
 )
 from sqlalchemy_transactional.common import (
     Propagation,
+    SessionFactoryAlreadyBoundError,
     SessionFactoryNotBoundError,
     SessionNotBoundError,
     TransactionRequiredError,
+    UnsupportedPropagationModeError,
 )
 
 
@@ -42,6 +46,16 @@ async def test_sessionmaker_context_sets_and_resets(
 
 
 @pytest.mark.asyncio
+async def test_sessionmaker_context_rejects_nested_binding(
+    sessionmaker: Sessionmaker,
+) -> None:
+    async with sessionmaker_context(sessionmaker):
+        with pytest.raises(SessionFactoryAlreadyBoundError):
+            async with sessionmaker_context(sessionmaker):
+                pass
+
+
+@pytest.mark.asyncio
 async def test_required_creates_session_and_commits(
     setup_db: None,
     sessionmaker: Sessionmaker,
@@ -62,6 +76,28 @@ async def test_required_creates_session_and_commits(
 
     with pytest.raises(SessionNotBoundError):
         current_session()
+
+
+@pytest.mark.asyncio
+async def test_required_reuses_existing_session(
+    setup_db: None,
+    sessionmaker: Sessionmaker,
+) -> None:
+    async with sessionmaker_context(sessionmaker):
+
+        @transactional
+        async def inner() -> int:
+            return id(current_session())
+
+        @transactional
+        async def outer() -> tuple[int, int]:
+            outer_session_id = id(current_session())
+            inner_session_id = await inner()
+            return outer_session_id, inner_session_id
+
+        outer_session_id, inner_session_id = await outer()
+
+    assert inner_session_id == outer_session_id
 
 
 @pytest.mark.asyncio
@@ -123,6 +159,25 @@ async def test_requires_new_commits_independently(
 
 
 @pytest.mark.asyncio
+async def test_nested_without_existing_session_acts_like_required(
+    setup_db: None,
+    sessionmaker: Sessionmaker,
+) -> None:
+    async with sessionmaker_context(sessionmaker):
+
+        @transactional(Propagation.NESTED)
+        async def insert() -> None:
+            await current_session().execute(
+                text("INSERT INTO items (name) VALUES (:name)"),
+                {"name": "nested_root"},
+            )
+
+        await insert()
+
+    assert await _names(sessionmaker) == ["nested_root"]
+
+
+@pytest.mark.asyncio
 async def test_nested_rollback_to_savepoint(
     setup_db: None,
     sessionmaker: Sessionmaker,
@@ -151,3 +206,44 @@ async def test_nested_rollback_to_savepoint(
         await outer()
 
     assert await _names(sessionmaker) == ["outer"]
+
+
+@pytest.mark.asyncio
+async def test_isolation_level_is_applied(
+    setup_db: None,
+    sessionmaker: Sessionmaker,
+) -> None:
+    async with sessionmaker_context(sessionmaker):
+
+        @transactional(isolation_level="SERIALIZABLE")
+        async def insert() -> None:
+            await current_session().execute(
+                text("INSERT INTO items (name) VALUES (:name)"),
+                {"name": "isolation"},
+            )
+
+        await insert()
+
+    assert await _names(sessionmaker) == ["isolation"]
+
+
+@pytest.mark.asyncio
+async def test_unsupported_propagation_raises_meaningful_error(
+    sessionmaker: Sessionmaker,
+) -> None:
+    class UnsupportedPropagation:
+        value = "unsupported"
+
+    propagation = cast(Propagation, UnsupportedPropagation())
+
+    async with sessionmaker_context(sessionmaker):
+
+        @transactional(propagation)
+        async def run() -> None:
+            return None
+
+        with pytest.raises(UnsupportedPropagationModeError) as exc_info:
+            await run()
+
+    assert exc_info.value.propagation is propagation
+    assert "unsupported" in str(exc_info.value)

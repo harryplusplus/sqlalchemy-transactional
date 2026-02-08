@@ -26,3 +26,7 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=sqlalchemy_transactional --cov-report=term-missing --cov-fail-under=100"
+
+[tool.pyright]
+typeCheckingMode = "strict"
+include = ["src", "tests"]
