@@ -1,6 +1,6 @@
 [project]
 name = "sqlalchemy-transactional"
-version = "0.1.2"
+version = "1.0.0"
 description = "Spring-style transactional boundaries for SQLAlchemy async sessions."
 readme = "README.md"
 license = "MIT"
