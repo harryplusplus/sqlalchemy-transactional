@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
 from typing import Any, AsyncGenerator, Awaitable, Callable
@@ -108,8 +109,7 @@ async def run_with_transaction(
     invoke: Invoke,
 ) -> Any:
     async with session.begin():
-        async with session_context(session):
-            return await invoke()
+        return await run_in_session_context(session, invoke)
 
 
 async def run_with_isolation(
@@ -119,19 +119,31 @@ async def run_with_isolation(
 ) -> Any:
     await session.connection(execution_options={"isolation_level": isolation_level})
 
-    async with session_context(session):
+    async def invoke_in_isolation() -> Any:  # pragma: no cover
         return await commit_or_rollback(session, invoke)
+
+    return await run_in_session_context(
+        session, invoke_in_isolation
+    )  # pragma: no cover
+
+
+async def run_in_session_context(
+    session: AsyncSession,
+    invoke: Invoke,
+) -> Any:
+    async with session_context(session):
+        return await invoke()
 
 
 async def commit_or_rollback(
     session: AsyncSession,
     invoke: Invoke,
 ) -> Any:
-    try:
-        result = await invoke()
-    except Exception:
+    outcome = (await asyncio.gather(invoke(), return_exceptions=True))[0]
+
+    if isinstance(outcome, BaseException):
         await session.rollback()
-        raise
+        raise outcome
 
     await session.commit()
-    return result
+    return outcome

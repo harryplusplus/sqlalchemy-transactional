@@ -28,8 +28,11 @@
 ## 작업 체크리스트
 - 코드 변경 후 아래 순서로 확인한다.
 1. `scripts/check.sh`
-2. `uv run --group dev pytest`
-3. 필요 시 최소 지원 버전 검증: `scripts/test.sh`
+2. `scripts/test.sh`
+- 테스트 실행 인자/축 제어는 명령을 직접 복제하지 말고 스크립트 인자/환경변수로 처리한다.
+- 예:
+  - 빠른 로컬 확인: `RUN_MIN_SQLALCHEMY_TEST=0 scripts/test.sh`
+  - 최소 버전 축 포함: `RUN_MIN_SQLALCHEMY_TEST=1 scripts/test.sh`
 
 ## 커밋 규약
 - 커밋은 작고 명확하게 나눈다.

@@ -1,50 +1,50 @@
 # sqlalchemy-transactional
 
-## Development
+Transaction propagation decorators and context management for SQLAlchemy async sessions.
 
-### Prerequisites
-- Python 3.10+
-- `uv` (dependency management + project commands)
+## Quick Start
 
-### Setup
-```bash
-uv sync --group dev
+```python
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from sqlalchemy_transactional.asyncio import (
+    current_session,
+    sessionmaker_context,
+    transactional,
+)
+from sqlalchemy_transactional.common import Propagation
+
+engine = create_async_engine("sqlite+aiosqlite:///app.db")
+sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
+
+
+@transactional
+async def create_user(name: str) -> None:
+    await current_session().execute(
+        text("INSERT INTO users (name) VALUES (:name)"),
+        {"name": name},
+    )
+
+
+@transactional(Propagation.REQUIRES_NEW)
+async def write_audit_log(message: str) -> None:
+    await current_session().execute(
+        text("INSERT INTO audit_logs (message) VALUES (:message)"),
+        {"message": message},
+    )
+
+
+async with sessionmaker_context(sessionmaker):
+    await create_user("alice")
 ```
 
-### Test
-```bash
-scripts/test.sh
-```
+### Propagation Modes
+- `REQUIRED`: Join the current transaction, or start one if none exists.
+- `MANDATORY`: Require an active transaction; raise an error if none exists.
+- `REQUIRES_NEW`: Always run in a new transaction.
+- `NESTED`: Use a nested transaction (savepoint) if one exists, otherwise behave like `REQUIRED`.
 
-`scripts/test.sh` runs tests in 2 phases:
-1. `uv run --group dev pytest` (normal project environment)
-2. `uv run --isolated --group dev --with "sqlalchemy[asyncio]==2.0.0" pytest` (minimum supported SQLAlchemy check)
+## Contributing
 
-Pass pytest options through:
-
-```bash
-scripts/test.sh -k transactional
-```
-
-Override the minimum SQLAlchemy version if needed:
-
-```bash
-MIN_SQLALCHEMY_VERSION=2.0.1 scripts/test.sh
-```
-
-### Quality
-```bash
-scripts/check.sh
-```
-
-`scripts/check.sh` runs:
-1. `ruff check --fix`
-2. `ruff format`
-3. `deptry . --known-first-party sqlalchemy_transactional`
-4. `pyright`
-
-Optionally pass paths to limit Ruff scope:
-
-```bash
-scripts/check.sh src tests
-```
+Development workflow, checks, and test policies are defined in `AGENTS.md`.
