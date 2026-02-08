@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy_transactional.asyncio import (
     current_session,
     sessionmaker_context,
@@ -13,14 +13,16 @@ from sqlalchemy_transactional.common import (
     TransactionRequiredError,
 )
 
+Sessionmaker = async_sessionmaker[AsyncSession]
 
-async def _count_items(sm: async_sessionmaker) -> int:
+
+async def _count_items(sm: Sessionmaker) -> int:
     async with sm() as session:
         result = await session.execute(text("SELECT COUNT(*) FROM items"))
         return result.scalar_one()
 
 
-async def _names(sm: async_sessionmaker) -> list[str]:
+async def _names(sm: Sessionmaker) -> list[str]:
     async with sm() as session:
         result = await session.execute(text("SELECT name FROM items ORDER BY id"))
         return [row[0] for row in result.fetchall()]
@@ -28,7 +30,7 @@ async def _names(sm: async_sessionmaker) -> list[str]:
 
 @pytest.mark.asyncio
 async def test_sessionmaker_context_sets_and_resets(
-    sessionmaker: async_sessionmaker,
+    sessionmaker: Sessionmaker,
 ) -> None:
     @transactional
     async def requires_sessionmaker() -> None:
@@ -44,7 +46,7 @@ async def test_sessionmaker_context_sets_and_resets(
 @pytest.mark.asyncio
 async def test_required_creates_session_and_commits(
     setup_db: None,
-    sessionmaker: async_sessionmaker,
+    sessionmaker: Sessionmaker,
 ) -> None:
     async with sessionmaker_context(sessionmaker):
 
@@ -67,7 +69,7 @@ async def test_required_creates_session_and_commits(
 @pytest.mark.asyncio
 async def test_mandatory_requires_existing_transaction(
     setup_db: None,
-    sessionmaker: async_sessionmaker,
+    sessionmaker: Sessionmaker,
 ) -> None:
     async with sessionmaker_context(sessionmaker):
 
@@ -94,7 +96,7 @@ async def test_mandatory_requires_existing_transaction(
 @pytest.mark.asyncio
 async def test_requires_new_commits_independently(
     setup_db: None,
-    sessionmaker: async_sessionmaker,
+    sessionmaker: Sessionmaker,
 ) -> None:
     async with sessionmaker_context(sessionmaker):
 
@@ -125,7 +127,7 @@ async def test_requires_new_commits_independently(
 @pytest.mark.asyncio
 async def test_nested_rollback_to_savepoint(
     setup_db: None,
-    sessionmaker: async_sessionmaker,
+    sessionmaker: Sessionmaker,
 ) -> None:
     async with sessionmaker_context(sessionmaker):
 

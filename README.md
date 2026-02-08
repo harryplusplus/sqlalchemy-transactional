@@ -31,3 +31,20 @@ Override the minimum SQLAlchemy version if needed:
 ```bash
 MIN_SQLALCHEMY_VERSION=2.0.1 scripts/test.sh
 ```
+
+### Quality
+```bash
+scripts/check.sh
+```
+
+`scripts/check.sh` runs:
+1. `ruff check --fix`
+2. `ruff format`
+3. `deptry . --known-first-party sqlalchemy_transactional`
+4. `pyright`
+
+Optionally pass paths to limit Ruff scope:
+
+```bash
+scripts/check.sh src tests
+```
